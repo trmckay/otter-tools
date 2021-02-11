@@ -18,7 +18,6 @@ else
 fi
 
 echo "Installing to: $PREFIX"
-exit
 
 # SET VERBOSE; ABORT ON NON-ZERO EXIT CODE
 set -x
@@ -28,12 +27,49 @@ set -e
 if [ command -v apt &> /dev/null ]; then
     sudo apt update
     sudo apt install -y \
-        python3 make git cargo build-essential gcc curl \
-        libreadline-dev libglib2.0-dev libpango1.0-dev libgtk-3-dev \
-        libcairo2-dev libatk1.0-dev libgdk-pixbuf2.0-dev \
-        autoconf automake autotools-dev libmpc-dev libmpfr-dev \
-        libgmp-dev gawk bison flex texinfo gperf libtool \
-        patchutils bc zlib1g-dev
+        python3 \
+        make \
+        git \
+        cargo \
+        build-essential \
+        gcc \
+        curl \
+        libreadline-dev \
+        autoconf \
+        automake \
+        autotools-dev \
+        curl \
+        python3 \
+        libmpc-dev \
+        libmpfr-dev \
+        libgmp-dev \
+        gawk \
+        build-essential \
+        bison \
+        flex \
+        texinfo \
+        gperf \
+        libtool \
+        patchutils \
+        bc \
+        zlib1g-dev \
+        libexpat-dev
+
+# HOMEBREW DEPENDENCIES
+elif [ command -v brew &> /dev/null ]; then
+    brew install \
+        python3 \
+        gawk \
+        gnu-sed \
+        gmp \
+        mpfr \
+        libmpc \
+        isl \
+        zlib \
+        expat \
+        glib \
+        readline
+
 else
     set +e
     echo "WARNING: Dependencies were NOT verified! If you have a problem make sure you install all
