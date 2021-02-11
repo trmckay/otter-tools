@@ -24,58 +24,35 @@ set -x
 set -e
 
 # DEBIAN/UBUNTU Dependencies
-if [ command -v apt &> /dev/null ]; then
-    sudo apt update
-    sudo apt install -y \
-        python3 \
-        make \
-        git \
-        cargo \
-        build-essential \
-        gcc \
-        curl \
-        libreadline-dev \
-        autoconf \
-        automake \
-        autotools-dev \
-        curl \
-        python3 \
-        libmpc-dev \
-        libmpfr-dev \
-        libgmp-dev \
-        gawk \
-        build-essential \
-        bison \
-        flex \
-        texinfo \
-        gperf \
-        libtool \
-        patchutils \
-        bc \
-        zlib1g-dev \
-        libexpat-dev
-
-# HOMEBREW DEPENDENCIES
-elif [ command -v brew &> /dev/null ]; then
-    brew install \
-        python3 \
-        gawk \
-        gnu-sed \
-        gmp \
-        mpfr \
-        libmpc \
-        isl \
-        zlib \
-        expat \
-        glib \
-        readline
-
-else
-    set +e
-    echo "WARNING: Dependencies were NOT verified! If you have a problem make sure you install all
-    dependencies."
-    set -e
-fi
+sudo apt update
+sudo apt install -y \
+    python3 \
+    make \
+    git \
+    cargo \
+    build-essential \
+    gcc \
+    curl \
+    libreadline-dev \
+    autoconf \
+    automake \
+    autotools-dev \
+    curl \
+    python3 \
+    libmpc-dev \
+    libmpfr-dev \
+    libgmp-dev \
+    gawk \
+    build-essential \
+    bison \
+    flex \
+    texinfo \
+    gperf \
+    libtool \
+    patchutils \
+    bc \
+    zlib1g-dev \
+    libexpat-dev
 
 # DOWNLOAD/VERIFY SOURCES
 SOURCES="."
@@ -89,6 +66,7 @@ cd build
 ../configure
 make
 sudo -E make install
+cd $TOPLVL
 
 # RISC-V TOOLCHAIN
 cd "$SOURCES"/riscv-gnu-toolchain
@@ -96,9 +74,10 @@ mkdir -p build
 cd build
 ../configure --with-arch=rv32i --with-abi=ilp32 --prefix="$PREFIX"
 sudo -E make
+cd $TOPLVL
 
 # OTTER-GCC SCRIPT
-install -Dm 755 ./otter-devel/otter-gcc $PREFIX/bin/otter-gcc
+sudo install -Dm 755 ./otter-devel/otter-gcc $PREFIX/bin/otter-gcc
 
 set +x
 set +e
