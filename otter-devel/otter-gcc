@@ -1,0 +1,126 @@
+#!/bin/bash
+
+WORK_DIR="$(pwd)/.otter-gcc"
+
+set -e
+set -x
+
+mkdir -p $WORK_DIR
+mkdir $WORK_DIR/src
+
+# Makefile
+cat >$WORK_DIR/Makefile << EOF
+PROJECT = program
+BUILD = build
+
+C_FILES := \$(wildcard src/*.c)
+AS_FILES := \$(wildcard src/*.s)
+ASP_FILES := \$(wildcard src/*.S)
+
+C_OBJ_FILES := \$(patsubst src/%.c,build/%.o,\$(C_FILES))
+AS_OBJ_FILES := \$(patsubst src/%.s,build/%.o,\$(AS_FILES))
+ASP_OBJ_FILES := \$(patsubst src/%.S,build/%.o,\$(ASP_FILES))
+
+ifneq (\$(C_FILES),)
+RISCV_PREFIX = riscv64-unknown-elf-
+else
+RISCV_PREFIX = riscv64-unknown-elf-
+endif
+CC = \$(RISCV_PREFIX)gcc
+LD = \$(RISCV_PREFIX)ld
+OBJCOPY = \$(RISCV_PREFIX)objcopy
+OBJDUMP = \$(RISCV_PREFIX)objdump
+
+TARGET_ARCH =  -march=rv32i -mabi=ilp32
+ifneq (\$(C_FILES),)
+CCFLAGS = -O3 \$(TARGET_ARCH) -g
+else
+CCFLAGS = -O0 \$(TARGET_ARCH)
+endif
+
+all: dirs \$(BUILD)/mem.txt \$(BUILD)/\$(PROJECT).dump
+
+\$(BUILD)/%.o: src/%.c
+	\$(CC) -c -o \$@ \$< \$(CCFLAGS)
+
+\$(BUILD)/%.o: src/%.s
+	\$(CC) -c -o \$@ \$< \$(CCFLAGS)
+
+\$(BUILD)/%.o: src/%.S
+	\$(CC) -c -o \$@ \$< \$(CCFLAGS)
+
+\$(BUILD)/\$(PROJECT).elf: \${AS_OBJ_FILES} \${C_OBJ_FILES} \${ASP_OBJ_FILES}
+ifneq (\$(C_FILES),)
+	\$(CC)  -o \$@ \$^ -T link.ld \$(CCFLAGS)
+else
+	\$(CC) -o \$@ \$^ -T link.ld -mno-relax -nostdlib -nostartfiles -mcmodel=medany \$(CCFLAGS)
+endif
+
+#-Wl  --no-relax
+
+\$(BUILD)/\$(PROJECT).dump: \$(BUILD)/\$(PROJECT).elf
+ifneq (\$(C_FILES),)
+	\$(OBJDUMP) --no-show-raw-insn -S -s  \$< > \$@
+else
+	\$(OBJDUMP) -S -s \$< > \$@
+endif
+
+\$(BUILD)/mem.bin: \$(BUILD)/\$(PROJECT).elf
+	\$(OBJCOPY) -O binary --only-section=.data* --only-section=.text* \$< \$@
+
+\$(BUILD)/mem.txt: \$(BUILD)/mem.bin
+	hexdump -v -e '"%08x\n"' \$< > \$@
+
+dirs:
+	mkdir -p \$(BUILD)
+
+clean:
+	rm -rf \$(BUILD)
+
+print-%  : ; @echo \$* = \$(\$*)
+EOF
+
+# link.ld
+cat > $WORK_DIR/link.ld << EOF
+__sp = 0x10000;
+
+SECTIONS
+{
+    . =0x00000000;
+    .text.init : {
+        *(.text.init)
+    }
+
+    .text : {
+        *(.text)
+    }
+
+    __global_pointer\$ = .  + 0x800;
+    .data : {
+        *(.sbss)
+        *(COMMON)
+        *(.bss)
+
+        *(.data*)
+        *(.sdata)
+	*(.srodata*)
+         *(.rodata)
+        *(.got*)
+	/**(._edata*)*/
+	*(._end)
+    	/*_edata=.;*/
+	 _edata = .; PROVIDE (edata = .);
+ 	. = .;
+    }
+
+    /*_edata = .; PROVIDE (edata = .);*/
+    _end=.;
+}
+EOF
+
+cp "$@" -t $WORK_DIR/src
+
+(cd $WORK_DIR; make)
+cp $WORK_DIR/build/{mem.bin,mem.txt,program.dump} .
+
+rm -r $WORK_DIR
