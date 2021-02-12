@@ -5,8 +5,7 @@ WORK_DIR="$(pwd)/.otter-gcc"
 set -e
 set -x
 
-mkdir -p $WORK_DIR
-mkdir $WORK_DIR/src
+mkdir -p $WORK_DIR/src
 
 # Makefile
 cat >$WORK_DIR/Makefile << EOF
