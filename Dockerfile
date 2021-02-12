@@ -1,13 +1,15 @@
-from ubuntu:20.04 as builder
+FROM debian as builder
 MAINTAINER Trevor McKay <trmckay@calpoly.edu>
 
-RUN mkdir -p /sources
-COPY ./otter-devel /sources/
-COPY ./riscv-uart-debugger /sources/
-COPY ./riscv-gnu-toolchain /sources/
-COPY ./bootstrap.sh /sources/
+ENV TZ=America/Los_Angeles
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-WORKDIR /sources
-RUN ls
+COPY ./DEPS_deb.txt /DEPS.txt
+COPY ./otter-devel/otter-gcc /usr/bin
+COPY ./bootstrap.sh /bootstrap.sh
+
+RUN apt update -y && apt install -y $(cat DEPS.txt)
+RUN rm DEPS.txt
 
 RUN ./bootstrap.sh
+RUN rm ./bootstrap.sh
