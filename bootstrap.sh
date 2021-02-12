@@ -50,4 +50,4 @@ cd $TOPLVL
 rm -rf riscv-gnu-toolchain
 
 # OTTER-GCC SCRIPT
-install -Dm 755 otter-devel/otter-gcc $PREFIX/bin/otter-gcc
+install -m +x otter-gcc/otter-gcc $PREFIX/bin/otter-gcc
