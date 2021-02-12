@@ -1,6 +1,0 @@
-[submodule "riscv-gnu-toolchain"]
-	path = riscv-gnu-toolchain
-	url = https://github.com/riscv/riscv-gnu-toolchain
-[submodule "riscv-uart-debugger"]
-	path = riscv-uart-debugger
-	url = https://github.com/trmckay/riscv-uart-debugger
