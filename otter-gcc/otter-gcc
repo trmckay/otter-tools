@@ -1,9 +1,43 @@
 #!/bin/bash
 
-WORK_DIR="$(pwd)/.otter-gcc"
+USAGE="\n\
+Usage: otter-gcc [file1] [file2] ... [fileN] [pattern]\n\n\
+Examples:\n\
+$ otter-gcc program.s int.s\n\
+$ otter-gcc src/*.c
+"
 
-set -e
-set -x
+function cleanup {
+    cd $TOP_LVL
+    rm -rf $WORK_DIR
+    exit $1
+}
+
+if [ $# -lt 1 ]; then
+    echo "Error: No files provided."
+    echo -e $USAGE
+    exit 1
+fi
+
+for ARG in "$@"; do
+    if [ ! -f $ARG ]; then
+        echo "Error: File \'$ARG\' does not exist."
+        echo -e $USAGE
+        exit 1
+    fi
+done
+
+if command -v riscv32-unknown-elf-gcc; then
+    TOOLCHAIN=riscv32
+elif command -v riscv64-unknown-elf-gcc; then
+    TOOLCHAIN=riscv64
+else
+    echo "Error: riscv{32|64}-unknown-elf-gcc not found in PATH."
+    exit 1
+fi
+
+TOP_LVL="$(pwd)"
+WORK_DIR="$(pwd)/.otter-gcc"
 
 mkdir -p $WORK_DIR/src
 
@@ -21,9 +55,9 @@ AS_OBJ_FILES := \$(patsubst src/%.s,build/%.o,\$(AS_FILES))
 ASP_OBJ_FILES := \$(patsubst src/%.S,build/%.o,\$(ASP_FILES))
 
 ifneq (\$(C_FILES),)
-RISCV_PREFIX = riscv32-unknown-elf-
+RISCV_PREFIX = $TOOLCHAIN-unknown-elf-
 else
-RISCV_PREFIX = riscv32-unknown-elf-
+RISCV_PREFIX = $TOOLCHAIN-unknown-elf-
 endif
 CC = \$(RISCV_PREFIX)gcc
 LD = \$(RISCV_PREFIX)ld
@@ -118,8 +152,10 @@ SECTIONS
 EOF
 
 cp "$@" -t $WORK_DIR/src
+cd $WORK_DIR
+make || cleanup 1
 
-(cd $WORK_DIR; make)
+cd $TOP_LVL
 cp $WORK_DIR/build/{mem.bin,mem.txt,program.dump} .
 
-rm -r $WORK_DIR
+cleanup
