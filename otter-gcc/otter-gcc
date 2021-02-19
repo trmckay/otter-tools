@@ -8,21 +8,21 @@ $ otter-gcc src/*.c
 "
 
 function cleanup {
-    cd $TOP_LVL
-    rm -rf $WORK_DIR
-    exit $1
+    cd "$TOP_LVL" || exit 1
+    rm -rf "$WORK_DIR"
+    exit "$1"
 }
 
 if [ $# -lt 1 ]; then
     echo "Error: No files provided."
-    echo -e $USAGE
+    echo -e "$USAGE"
     exit 1
 fi
 
 for ARG in "$@"; do
-    if [ ! -f $ARG ]; then
+    if [ ! -f "$ARG" ]; then
         echo "Error: File \'$ARG\' does not exist."
-        echo -e $USAGE
+        echo -e "$USAGE"
         exit 1
     fi
 done
@@ -39,10 +39,10 @@ fi
 TOP_LVL="$(pwd)"
 WORK_DIR="$(pwd)/.otter-gcc"
 
-mkdir -p $WORK_DIR/src
+mkdir -p "$WORK_DIR"/src
 
 # Makefile
-cat >$WORK_DIR/Makefile << EOF
+cat >"$WORK_DIR"/Makefile << EOF
 PROJECT = program
 BUILD = build
 
@@ -114,7 +114,7 @@ print-%  : ; @echo \$* = \$(\$*)
 EOF
 
 # link.ld
-cat > $WORK_DIR/link.ld << EOF
+cat > "$WORK_DIR"/link.ld << EOF
 __sp = 0x10000;
 
 SECTIONS
@@ -151,11 +151,11 @@ SECTIONS
 }
 EOF
 
-cp "$@" -t $WORK_DIR/src
-cd $WORK_DIR
+cp "$@" -t "$WORK_DIR"/src
+cd "$WORK_DIR" || exit 1
 make || cleanup 1
 
-cd $TOP_LVL
-cp $WORK_DIR/build/{mem.bin,mem.txt,program.dump} .
+cd "$TOP_LVL" || exit 1
+cp "$WORK_DIR"/build/{mem.bin,mem.txt,program.dump} .
 
 cleanup
