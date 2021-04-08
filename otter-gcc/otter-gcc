@@ -158,4 +158,4 @@ make || cleanup 1
 cd "$TOP_LVL" || exit 1
 cp "$WORK_DIR"/build/{mem.bin,mem.txt,program.dump} .
 
-cleanup
+cleanup 0
